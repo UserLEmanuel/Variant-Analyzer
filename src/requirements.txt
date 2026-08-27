@@ -1,0 +1,4 @@
+cyvcf2
+streamlit
+pandas
+plotly
