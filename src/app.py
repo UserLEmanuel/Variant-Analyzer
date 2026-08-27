@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -6,6 +7,7 @@ from analyzer import analyze_variants, filter_variants
 
 st.set_page_config(page_title="Variant Analyzer", layout="wide")
 st.title("🧬 Variant Analyzer")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 uploaded_file = st.file_uploader("Încarcă un fișier VCF", type=["vcf", "vcf.gz"])
 
@@ -15,7 +17,7 @@ if uploaded_file is not None:
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 else:
-    file_path = "../data/example.vcf"
+    file_path = os.path.join(BASE_DIR, "..", "data", "example.vcf")
     st.info(f"Niciun fișier încărcat — se folosește exemplul implicit ({file_path})")
 
 variants = parse_vcf(file_path)
