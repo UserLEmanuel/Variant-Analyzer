@@ -8,7 +8,7 @@ def parse_vcf(file_path):
         chromosome = record.CHROM
         position = record.POS
         reference = record.REF
-        alternative = record.ALT[0]  # primul ALT, dacă sunt mai multe
+        alternative = record.ALT[0]  
         quality = record.QUAL if record.QUAL is not None else 0.0
         filter_status = record.FILTER if record.FILTER is not None else "PASS"
 
