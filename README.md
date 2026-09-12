@@ -1,71 +1,149 @@
 # Variant Analyzer
 
-Analizeaza variante genetice (SNP, insertii, deletii) dintr-un fisier VCF.
-Disponibil ca CLI si ca dashboard web bilingv (EN/RO), cu grafice si export CSV.
+Reads a **VCF file**, classifies the genetic variants inside it, and explains what it found —
+in plain language, next to the numbers.
 
-**Live demo:** dashboard-ul e deployat pe Streamlit Cloud (entry point `src/app.py`).
+Available as a command-line tool and as a bilingual (EN/RO) web dashboard with charts,
+filters and CSV export.
 
-## Setup local
+Built from scratch as a first-year MSc Bioinformatics project, to understand variant
+classification by implementing it rather than by reading about it.
 
-```powershell
+**Live demo:** LINK_STREAMLIT_AICI
+
+---
+
+## What it does
+
+| | |
+| --- | --- |
+| **Parse** | Reads `.vcf` and `.vcf.gz` with a plain-Python parser — no C dependencies |
+| **Classify** | Labels each variant as SNP, insertion or deletion by comparing REF and ALT lengths |
+| **Summarise** | Totals per type, plus how many variants passed the caller's own quality filter |
+| **Interpret** | Turns those numbers into a sentence: mean quality, PASS percentage, and whether the call set looks high, moderate or low quality |
+| **Visualise** | Variant-type breakdown and quality-score distribution, drawn with Plotly |
+| **Filter** | By variant type, chromosome and minimum quality, with CSV export of the result |
+| **Teach** | A Theory page on DNA, genes and variants, plus an interactive VCF explainer: click any of the eight columns and see what that field means |
+
+Upload your own file, or leave the uploader empty and the app runs on the bundled
+`data/example.vcf`.
+
+---
+
+## Setup
+
+Python 3.10 or newer.
+
+```bash
+git clone https://github.com/UserLEmanuel/Variant-Analyzer.git
+cd Variant-Analyzer
 python -m venv venv
-venv\Scripts\activate
-pip install -r src\requirements.txt
 ```
 
-## Utilizare
+```bash
+# Windows
+venv\Scripts\activate
+# Linux / macOS
+source venv/bin/activate
+```
 
-### Dashboard web
+```bash
+pip install -r src/requirements.txt
+```
 
-```powershell
+## Usage
+
+### Web dashboard
+
+```bash
 cd src
 streamlit run app.py
 ```
 
-Se deschide un dashboard cu doua pagini:
-- **Theory** — o mica introducere in ADN, genom si variante genetice, plus un explicator interactiv al coloanelor unui fisier VCF.
-- **Analyzer** — statistici, grafice (distributia tipurilor si a calitatii), filtre (tip, cromozom, calitate minima) si export CSV al variantelor filtrate. Poti incarca propriul fisier `.vcf`/`.vcf.gz` sau folosi fisierul exemplu.
+Two pages: **Theory** (an introduction to DNA, genomes and variants, plus the interactive VCF
+explainer) and **Analyzer** (statistics, charts, filters and CSV export). The language switch
+sits at the right of the navbar.
 
-Limba (EN/RO) se schimba din colturile dreapta-sus ale navbar-ului.
+### Command line
 
-### CLI
-
-```powershell
+```bash
 cd src
 python main.py
-```
-
-Optiuni disponibile:
-
-```powershell
 python main.py --file ../data/example.vcf --type SNP --chromosome 12 --min-quality 80
 python main.py --type all --chromosome all --min-quality 0
 ```
 
-| Optiune | Scurt | Descriere | Implicit |
-|---|---|---|---|
-| `--file` | `-f` | Calea catre fisierul VCF | `../data/example.vcf` |
-| `--type` | `-t` | Filtreaza dupa tip (`SNP`, `Insertion`, `Deletion`, `all`) | `SNP` |
-| `--chromosome` | `-c` | Filtreaza dupa cromozom (`all` pentru toate) | `12` |
-| `--min-quality` | `-q` | Calitate minima (QUAL) | `80` |
+| Option | Short | Description | Default |
+| --- | --- | --- | --- |
+| `--file` | `-f` | Path to the VCF file | `../data/example.vcf` |
+| `--type` | `-t` | Filter by type (`SNP`, `Insertion`, `Deletion`, `all`) | `SNP` |
+| `--chromosome` | `-c` | Filter by chromosome (`all` to disable) | `12` |
+| `--min-quality` | `-q` | Minimum QUAL score | `80` |
 
-## Structura proiectului
+---
+
+## Project structure
+
+The logic is kept out of the interface, so parsing and analysis can be reused and tested
+on their own.
 
 ```
-data/example.vcf        fisier VCF de test
-src/parser.py            citeste si parseaza fisiere VCF (text simplu, fara dependinte C)
-src/models.py             modelul de date Variant
-src/analyzer.py           statistici si filtrare variante
-src/main.py                interfata de linie de comanda (rich)
-src/app.py                 punct de intrare al dashboard-ului web (streamlit)
-src/i18n.py                texte EN/RO pentru dashboard
-src/ui/                    paginile dashboard-ului (navbar, home/theory, analyzer, interpretare, explicator VCF)
-src/requirements.txt       dependinte (citit si de Streamlit Cloud la deploy)
+data/example.vcf       sample VCF file
+src/parser.py          reads and parses VCF files (plain text, no C dependencies)
+src/models.py          the Variant data model
+src/analyzer.py        statistics and filtering — pure functions, no Streamlit
+src/main.py            command-line interface (argparse + rich)
+src/app.py             web dashboard entry point (Streamlit)
+src/i18n.py            every string in EN and RO, behind a t() lookup
+src/ui/                dashboard pages: navbar, theory, analyzer, interpretation, VCF explainer
+src/requirements.txt   dependencies (also read by Streamlit Cloud on deploy)
 ```
 
-## De ce nu cyvcf2
+---
 
-Fisierele VCF de aici sunt text simplu tab-separated, asa ca parser.py foloseste un parser
-Python simplu, fara dependinte C. `cyvcf2` (folosit initial) are nevoie de `htslib` si nu se
-instaleaza usor pe Windows fara unelte de build suplimentare — varianta curenta ruleaza
-identic pe Windows, Linux si Streamlit Cloud, fara nicio instalare speciala.
+## Why not cyvcf2
+
+The first version used `cyvcf2`. It is the right library for production genomics work, but it
+builds against **htslib**, which means a C toolchain. On Windows that is a real obstacle, and
+it made the project harder to run than the project itself is.
+
+VCF is tab-separated text. Parsing the seven fixed columns takes about thirty lines of Python
+and no dependencies at all. The current parser runs identically on Windows, Linux and Streamlit
+Cloud, with nothing to compile.
+
+The trade-off is deliberate: `cyvcf2` is faster on multi-gigabyte files and handles the full
+specification, including multi-allelic records and sample genotypes. For a teaching tool run on
+small files, portability was worth more than speed.
+
+---
+
+## A one-minute VCF primer
+
+A VCF line describes one position where the sample differs from the reference genome:
+
+```
+#CHROM  POS        ID  REF  ALT  QUAL  FILTER  INFO
+7       140453136  .   C    T    99    PASS    AF=0.21
+```
+
+Chromosome 7, position 140,453,136, where the reference has a `C` and this sample has a `T`.
+One letter for one letter — a **SNP**. If `ALT` were longer than `REF` it would be an
+**insertion**; shorter, a **deletion**. `QUAL` is the caller's confidence; `FILTER` is its own
+verdict on whether the call is trustworthy.
+
+---
+
+## Limitations
+
+A learning tool, not a clinical one.
+
+- Only the first alternate allele of a multi-allelic record is read.
+- Classification is length-based, so complex substitutions fall outside SNP / insertion / deletion.
+- No annotation against gene or variant databases, and therefore no claim about pathogenicity.
+- Nothing here should be used to interpret a real patient's genome.
+
+## Roadmap
+
+- Full multi-allelic support
+- Annotation against a reference gene set, so a variant can be placed in a gene
+- Tests over `parser.py` and `analyzer.py`
