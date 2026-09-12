@@ -9,7 +9,8 @@ filters and CSV export.
 Built from scratch as a first-year MSc Bioinformatics project, to understand variant
 classification by implementing it rather than by reading about it.
 
-**Live demo:** LINK_STREAMLIT_AICI
+**Live demo:** https://variant-analyzer-le.streamlit.app
+> First load can take up to a minute while the free Streamlit instance wakes up.
 
 ---
 
