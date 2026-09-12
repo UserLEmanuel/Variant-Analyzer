@@ -1,0 +1,3 @@
+rich>=13
+streamlit>=1.30
+pandas>=2
