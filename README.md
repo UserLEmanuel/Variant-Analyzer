@@ -1,16 +1,32 @@
 # Variant Analyzer
 
 Analizeaza variante genetice (SNP, insertii, deletii) dintr-un fisier VCF.
+Disponibil ca CLI si ca dashboard web bilingv (EN/RO), cu grafice si export CSV.
 
-## Setup
+**Live demo:** dashboard-ul e deployat pe Streamlit Cloud (entry point `src/app.py`).
+
+## Setup local
 
 ```powershell
 python -m venv venv
 venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r src\requirements.txt
 ```
 
 ## Utilizare
+
+### Dashboard web
+
+```powershell
+cd src
+streamlit run app.py
+```
+
+Se deschide un dashboard cu doua pagini:
+- **Theory** — o mica introducere in ADN, genom si variante genetice, plus un explicator interactiv al coloanelor unui fisier VCF.
+- **Analyzer** — statistici, grafice (distributia tipurilor si a calitatii), filtre (tip, cromozom, calitate minima) si export CSV al variantelor filtrate. Poti incarca propriul fisier `.vcf`/`.vcf.gz` sau folosi fisierul exemplu.
+
+Limba (EN/RO) se schimba din colturile dreapta-sus ale navbar-ului.
 
 ### CLI
 
@@ -33,23 +49,23 @@ python main.py --type all --chromosome all --min-quality 0
 | `--chromosome` | `-c` | Filtreaza dupa cromozom (`all` pentru toate) | `12` |
 | `--min-quality` | `-q` | Calitate minima (QUAL) | `80` |
 
-### Dashboard web
-
-```powershell
-cd src
-streamlit run app.py
-```
-
-Se deschide in browser un dashboard cu statistici, un grafic al tipurilor de variante
-si un tabel filtrabil. Poti incarca propriul fisier `.vcf` sau folosi fisierul exemplu.
-
 ## Structura proiectului
 
 ```
-data/example.vcf   fisier VCF de test
-src/parser.py       citeste si parseaza fisiere VCF (text simplu, fara dependinte C)
-src/models.py        modelul de date Variant
-src/analyzer.py      statistici si filtrare variante
-src/main.py           interfata de linie de comanda (rich)
-src/app.py            dashboard web (streamlit)
+data/example.vcf        fisier VCF de test
+src/parser.py            citeste si parseaza fisiere VCF (text simplu, fara dependinte C)
+src/models.py             modelul de date Variant
+src/analyzer.py           statistici si filtrare variante
+src/main.py                interfata de linie de comanda (rich)
+src/app.py                 punct de intrare al dashboard-ului web (streamlit)
+src/i18n.py                texte EN/RO pentru dashboard
+src/ui/                    paginile dashboard-ului (navbar, home/theory, analyzer, interpretare, explicator VCF)
+src/requirements.txt       dependinte (citit si de Streamlit Cloud la deploy)
 ```
+
+## De ce nu cyvcf2
+
+Fisierele VCF de aici sunt text simplu tab-separated, asa ca parser.py foloseste un parser
+Python simplu, fara dependinte C. `cyvcf2` (folosit initial) are nevoie de `htslib` si nu se
+instaleaza usor pe Windows fara unelte de build suplimentare — varianta curenta ruleaza
+identic pe Windows, Linux si Streamlit Cloud, fara nicio instalare speciala.
